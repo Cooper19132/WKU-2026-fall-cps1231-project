@@ -14,6 +14,8 @@ Java handwritten digit recognizer using the K-nearest neighbors (KNN) algorithm.
 
 Open the project in IntelliJ IDEA and run `DigitRecognizerUI`.
 
+Run `Main` to evaluate the classifier on the separate UCI test set. The current K=3 implementation scores 97.83% on its 1,797 test samples; this does not measure accuracy on drawings made in the application.
+
 The reference data is loaded from:
 
 ```text
@@ -23,4 +25,6 @@ data/optical+recognition+of+handwritten+digits/optdigits.tra
 The dataset is the UCI Optical Recognition of Handwritten Digits dataset:
 
 > Alpaydin, E. & Kaynak, C. (1998). Optical Recognition of Handwritten Digits. UCI Machine Learning Repository. https://doi.org/10.24432/C50P49
+
+The dataset is distributed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The files in this project are provided by the UCI dataset and are included with attribution.
 

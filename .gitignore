@@ -34,3 +34,4 @@ data/optdigits.tra
 data/optdigits.tes
 data/**/*_副本*
 data/optical+recognition+of+handwritten+digits/*.Z
+data/optical+recognition+of+handwritten+digits/optdigits-orig.names
