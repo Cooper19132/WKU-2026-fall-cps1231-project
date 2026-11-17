@@ -1,30 +1,61 @@
 # WKU 2026 Fall CPS1231 Project
 
-Java handwritten digit recognizer using the K-nearest neighbors (KNN) algorithm.
+大一 Java 课程项目：使用 K近邻（KNN）算法识别单个手写数字，提供 Swing 画板和最近邻样本展示。
 
-## Features
+## 功能
 
-- Load the UCI Optical Recognition of Handwritten Digits dataset.
-- Compare 64-feature digit samples with squared Euclidean distance.
-- Predict a digit using KNN voting.
-- Draw a digit in a Swing window and recognize it.
-- Display the processed drawing and the three nearest reference samples.
+- 从文件读取 UCI 手写数字参考样本和独立测试样本。
+- 使用64个特征的平方欧氏距离寻找最近邻，按标签投票预测0～9。
+- 在画板上书写、识别、清空重写；空白画板会提示先书写。
+- 同时展示处理后的笔迹与参与投票的三个邻居，以及真实标签和平方距离。
 
-## Run
+## 在 IDEA 中运行
 
-Open the project in IntelliJ IDEA and run `DigitRecognizerUI`.
+1. 打开整个项目，使用支持当前代码的 JDK（例如 JDK 17 或更高版本）。无需安装第三方 Java 库。
+2. 将运行配置中的工作目录设为项目根目录，也就是同时包含 `src` 和 `data` 的目录。
+3. 运行 `DigitRecognizerUI.main` 打开画板，按住鼠标或触控板写一个数字，点击“识别数字”。
+4. 结果窗口展示的邻居实际参与了投票；距离越小表示特征越接近，距离不是置信度。
+5. 关闭结果窗口后，点击“清空重写”开始下一次识别。将鼠标停在按钮或结果说明上可查看提示。
 
-Run `Main` to evaluate the classifier on the separate UCI test set. The current K=3 implementation scores 97.83% on its 1,797 test samples; this does not measure accuracy on drawings made in the application.
+运行 `Main.main` 可进行控制台评估。当前 K=3 在1797个 UCI 独立测试样本上的正确率为97.83%，不代表画板输入的识别正确率。算法不保证识别任意写法，当前只对空白画板进行拒绝处理。
 
-The reference data is loaded from:
+参考数据路径为：
 
 ```text
 data/optical+recognition+of+handwritten+digits/optdigits.tra
 ```
 
-The dataset is the UCI Optical Recognition of Handwritten Digits dataset:
+## 代码结构与阅读顺序
+
+| 类 | 职责 |
+|---|---|
+| `Main` | 文件解析、样本与标签拆分、距离计算、寻找邻居、投票及评估 |
+| `DrawingPanel` | 监听鼠标事件，在图片上保存笔迹，清空与重绘 |
+| `ImageProcessor` | 寻找笔迹范围、缩放居中、提取64个特征 |
+| `NeighborResults` | 使用同一批邻居完成投票，并展示参考样本的灰度示意图 |
+| `DigitRecognizerUI` | 加载一次参考数据，创建窗口，把上述功能连接起来 |
+
+建议先读 `Main.predict`，再依次阅读它调用的各个小方法；理解分类后再读图像处理和按钮响应。
+
+需要分清的数组：`samples[i]` 是样本，`labels[i]` 是标签，`distances[i]` 是距离。`nearestIndices[0]` 是排名第一的样本下标，`labels[nearestIndices[0]]` 才是它的数字标签。`votes[7]` 表示数字7获得的票数。
+
+## 常见问题与现场修改
+
+- **找不到数据文件**：核对文件名、大小写及工作目录。`Main` 与界面入口分别设置了数据路径。
+- **提示“需要类、接口……”**：检查是否多写了 `}`，导致方法落到类外；本项目的方法彼此并列，不能嵌套。
+- **数组越界**：长度为 n 的数组合法下标为0～n−1；K是数量，允许等于参考样本数量。
+- **改变邻居数**：修改界面调用 `NeighborResults.showResults` 时最后的参数。只改标题文字不会改变投票。
+- **平票**：`findMostVotedLabel` 从小到大扫描并使用 `>`，平票选择较小数字。
+- **识别错了**：先看笔迹预处理和邻居示意图，再核对64个特征、距离、下标与标签。相同距离的邻居不保证保持原顺序。
+- **数据格式**：每行64个0～16的特征，最后一列是0～9的标签；不含标题、空白行或缺失值。读取方法假设这些条件成立。
+
+`readFirstLine` 和完整排序方法 `sortIndicesByDistance` 作为学习示例保留；当前完整识别流程不调用它们。图片按4×4区域统计笔画像素，参考图片是特征还原的示意图，不是原始笔迹的精确重建。
+
+## 数据来源与授权
+
+数据集：UCI Optical Recognition of Handwritten Digits。
 
 > Alpaydin, E. & Kaynak, C. (1998). Optical Recognition of Handwritten Digits. UCI Machine Learning Repository. https://doi.org/10.24432/C50P49
 
-The dataset is distributed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The files in this project are provided by the UCI dataset and are included with attribution.
+数据集采用 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) 授权。项目保留数据来源和原始说明；画板的缩放、居中采用简化实现，不完全复现数据集原始预处理。
 

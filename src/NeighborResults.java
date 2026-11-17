@@ -11,9 +11,14 @@ import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 
+/** 展示预测结果以及实际参与投票的参考样本，帮助解释 K近邻的判断过程。 */
 public class NeighborResults {
 
-    // 显示结果窗口，并返回预测数字
+    /**
+     * normalized 是32×32的处理结果，features 是它对应的64个特征。
+     * k 必须满足 1 <= k <= samples.length；标签在0～9之间。
+     * 弹窗关闭后返回预测数字，不是样本下标，也不是票数。
+     */
     public static int showResults(
             JFrame window,
             BufferedImage normalized,
@@ -41,23 +46,24 @@ public class NeighborResults {
         );
 
         results.add(createImagePanel(
-                "Your drawing",
+                "你的笔迹（处理后）",
                 normalized,
-                "Prediction: " + prediction
+                "预测数字：" + prediction
         ));
 
         for (int i = 0; i < k; i++) {
+            // i 是邻居的排名位置，sampleIndex 才是参考数据中的原始下标。
             int sampleIndex = nearestIndices[i];
 
             BufferedImage sampleImage =
                     sampleToImage(samples[sampleIndex]);
 
             results.add(createImagePanel(
-                    "Neighbor " + (i + 1),
+                    "最近邻 " + (i + 1),
                     sampleImage,
                     "<html><center>"
-                            + "Label: " + labels[sampleIndex]
-                            + "<br>Squared distance: "
+                            + "真实标签：" + labels[sampleIndex]
+                            + "<br>平方距离："
                             + distances[sampleIndex]
                             + "</center></html>"
             ));
@@ -66,14 +72,14 @@ public class NeighborResults {
         JOptionPane.showMessageDialog(
                 window,
                 results,
-                "Prediction: " + prediction + " | K = " + k,
+                "预测数字：" + prediction + " ｜ 邻居数 K = " + k,
                 JOptionPane.PLAIN_MESSAGE
         );
 
         return prediction;
     }
 
-    // 把一个参考样本的64个特征转换成8×8灰度图片
+    // 把64个0～16的特征还原成8×8灰度示意图，无法恢复原始笔迹的精确位置。
     public static BufferedImage sampleToImage(int[] features) {
         BufferedImage image = new BufferedImage(
                 8, 8, BufferedImage.TYPE_INT_RGB
@@ -81,6 +87,7 @@ public class NeighborResults {
 
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
+                // 按行展开：第0行占下标0～7，第1行占8～15，最后一个下标为63。
                 int value = features[row * 8 + col];
 
                 // 特征0显示为白色，特征16显示为黑色
@@ -95,7 +102,7 @@ public class NeighborResults {
         return image;
     }
 
-    // 创建包含标题、图片和说明的小面板
+    // 创建包含标题、图片和说明的小面板；放大仅用于显示，不参与距离计算。
     public static JPanel createImagePanel(
             String title,
             BufferedImage image,
@@ -116,6 +123,7 @@ public class NeighborResults {
         JLabel detailLabel = new JLabel(
                 detail, SwingConstants.CENTER
         );
+        detailLabel.setToolTipText("标签是样本的真实数字；平方距离越小表示特征越接近，不是置信度或正确率。");
 
         panel.add(titleLabel, BorderLayout.NORTH);
         panel.add(imageLabel, BorderLayout.CENTER);
