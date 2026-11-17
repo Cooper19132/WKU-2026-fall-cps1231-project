@@ -4,12 +4,16 @@ import java.util.Scanner;
 
 /**
  * 数据读取、K近邻分类和测试集评估。
+ * Data loading, K-nearest neighbors classification, and test-set evaluation.
  * 本类的 main 用于控制台评估；手写演示请运行 DigitRecognizerUI。
+ * Run this main for console evaluation; run DigitRecognizerUI for the drawing application.
  * samples[i]、labels[i]、distances[i] 始终通过同一个样本下标 i 对应。
+ * samples[i], labels[i], and distances[i] refer to the same reference sample.
  */
 public class Main {
 
     // 测试集标签只在预测后核对答案，不作为特征传给 predict。
+    // Use test labels only to check predictions; never pass them as input features.
     public static void main(String[] args)
             throws FileNotFoundException {
 
@@ -17,21 +21,25 @@ public class Main {
                 "data/optical+recognition+of+handwritten+digits/";
 
         // 读取参考数据
+        // Load reference data.
         int[][] rows = readAllRows(dataFolder + "optdigits.tra");
         int[][] samples = buildSamples(rows);
         int[] labels = buildLabels(rows);
 
         // 读取独立测试数据
+        // Load the separate test set.
         int[][] testRows = readAllRows(dataFolder + "optdigits.tes");
         int[][] testSamples = buildSamples(testRows);
         int[] testLabels = buildLabels(testRows);
 
         // 检查数据规模
-        System.out.println("参考样本数：" + samples.length);
-        System.out.println("测试样本数：" + testSamples.length);
-        System.out.println("每个样本的特征数：" + samples[0].length);
+        // Check dataset sizes.
+        System.out.println("参考样本数 / Reference samples: " + samples.length);
+        System.out.println("测试样本数 / Test samples: " + testSamples.length);
+        System.out.println("每个样本的特征数 / Features per sample: " + samples[0].length);
 
         // 识别第一个真实测试样本
+        // Classify the first real test sample.
         int k = 3;
 
         int predicted = predict(
@@ -40,14 +48,15 @@ public class Main {
 
         int actual = testLabels[0];
 
-        System.out.println("预测数字：" + predicted);
-        System.out.println("真实标签：" + actual);
-        System.out.println("是否正确：" + (predicted == actual));
+        System.out.println("预测数字 / Predicted digit: " + predicted);
+        System.out.println("真实标签 / Label: " + actual);
+        System.out.println("是否正确 / Correct: " + (predicted == actual));
         // 小数组用于检查下标排序，应输出1、3、4，不参与测试集正确率计算。
+        // This small sorting check should return 1, 3, 4; it does not contribute to test accuracy.
         int[] checkDistances = {45, 1, 38, 2, 3};
         int[] nearest = findNearestIndices(checkDistances, 3);
 
-        System.out.print("最近邻下标检查（应为1 3 4）：");
+        System.out.print("最近邻下标检查 / Nearest indices (expected 1 3 4): ");
 
         for (int i = 0; i < nearest.length; i++) {
             System.out.print(nearest[i] + " ");
@@ -58,11 +67,13 @@ public class Main {
                 samples, labels, testSamples, testLabels, k
         );
 
-        System.out.println("UCI 独立测试集正确率：" + accuracy * 100 + "%");
-    }// main 方法在这里结束
+        System.out.println("UCI 独立测试集正确率 / UCI test accuracy: " + accuracy * 100 + "%");
+    }// main 方法在这里结束 / End of the main method.
 
     // 读取非空文件的第一行。保留此入门练习方法；完整加载使用 readAllRows。
+    // Read the first line of a nonempty file. Kept for learning; full loading uses readAllRows.
     // throws 将“文件找不到”的异常交给调用者处理。
+    // throws passes a file-not-found exception to the caller.
     public static String readFirstLine(String filePath)
             throws FileNotFoundException {
 
@@ -78,14 +89,17 @@ public class Main {
 
     /**
      * 对 input 分类：计算距离 → 选择最近 K 个样本 → 投票 → 返回数字标签。
+     * Classify input: calculate distances, select K neighbors, vote, and return a digit label.
      * 要求样本非空、特征长度与 input 相同，且每个样本都有0～9之间的标签。
+     * Requires nonempty samples, matching feature lengths, and one label in 0-9 per sample.
      * k 是邻居数量，不是数组下标；可以等于全部参考样本数量。
+     * k is a count, not an index; it may equal the number of reference samples.
      */
     public static int predict(int[] input, int[][] samples,
                               int[] labels, int k) {
         if (k < 1 || k > samples.length) {
             throw new IllegalArgumentException(
-                    "K 必须在1到" + samples.length + "之间"
+                    "K 必须在1到" + samples.length + "之间 / K must be between 1 and " + samples.length
             );
         }
 
@@ -98,8 +112,11 @@ public class Main {
 
     /**
      * 计算等长特征数组的平方欧氏距离：累加 (a[i] - b[i])²。
+     * Compute squared Euclidean distance for equal-length arrays: sum (a[i] - b[i]) squared.
      * 平方避免正负差抵消；只比较远近时不必开平方，排序结果相同。
+     * Squaring prevents cancellation; no square root is needed to compare distances.
      * 本项目特征为64个0～16的整数，最大距离为64×16²，int 足够保存。
+     * For 64 integer features in 0-16, the maximum distance is 64 times 16 squared; int is sufficient.
      */
     public static int distanceSquared(int[] a, int[] b) {
         int sum = 0;
@@ -113,6 +130,7 @@ public class Main {
     }
 
     // distances[i] 保存 input 与 samples[i] 的距离；特征和标签不混在一起比较。
+    // distances[i] compares input with samples[i]; labels are excluded from the feature comparison.
     public static int[] calculateDistances(int[] input, int[][] samples) {
         int[] distances = new int[samples.length];
 
@@ -124,7 +142,9 @@ public class Main {
     }
 
     // 完整选择排序，保留供学习对照；当前预测使用 findNearestIndices，只选前 K 名。
+    // Full selection sort, kept for comparison; prediction uses findNearestIndices to select only K neighbors.
     // 只交换下标，避免直接排序距离后丢失它与样本、标签之间的对应关系。
+    // Swap indices only, preserving the association between distances, samples, and labels.
     public static int[] sortIndicesByDistance(int[] distances) {
         int[] indices = new int[distances.length];
 
@@ -152,16 +172,19 @@ public class Main {
 
     /**
      * sortedIndices 是按距离排列的样本下标（至少 k 个）。
+     * sortedIndices contains sample indices ordered by distance, with at least k entries.
      * 返回 votes：下标表示数字类别，元素值表示该类别获得的票数。
+     * Return votes: each index is a digit class, and its value is the vote count.
      * 例如样本下标1的标签为7，则给 votes[7] 加一，不能给 votes[1] 加一。
+     * If sample 1 has label 7, increment votes[7], not votes[1].
      */
     public static int[] countVotes(int[] sortedIndices,
                                    int[] labels, int k) {
         int[] votes = new int[10];
 
         for (int i = 0; i < k; i++) {
-            int sampleIndex = sortedIndices[i]; // 邻居排名位置 → 原样本下标
-            int label = labels[sampleIndex];    // 原样本下标 → 数字标签
+            int sampleIndex = sortedIndices[i]; // 邻居排名位置 → 原样本下标 / Neighbor position -> original sample index.
+            int label = labels[sampleIndex];    // 原样本下标 → 数字标签 / Original sample index -> digit label.
             votes[label]++;
         }
 
@@ -169,7 +192,9 @@ public class Main {
     }
 
     // 返回类别下标（数字0～9），不是票数。传入的 votes 长度应为10。
+    // Return the digit class index, not its vote count. votes must have length 10.
     // 从小到大扫描并使用 >，因此平票时保留较小数字。
+    // Scan digits in ascending order with >, so ties retain the smaller digit.
     public static int findMostVotedLabel(int[] votes) {
         int prediction = 0;
 
@@ -182,7 +207,9 @@ public class Main {
         return prediction;
     }
     // 输入为逗号分隔的整数字符串；文件不应有标题行、空白行或缺失数字。
+    // Input contains comma-separated integers, with no header, blank lines, or missing values.
     // split 拆分字符串，trim 去掉两端空白，parseInt 将字符串转换为整数。
+    // split separates fields, trim removes surrounding whitespace, and parseInt converts text to int.
     public static int[] parseLine(String line) {
         String[] parts = line.split(",");
         int[] numbers = new int[parts.length];
@@ -194,6 +221,7 @@ public class Main {
         return numbers;
     }
     // 每行至少含一个特征和一个标签；最后一列是答案，必须从特征中排除。
+    // Each row has at least one feature and a label; exclude the final label column from features.
     public static int[] extractFeatures(int[] row) {
         int[] features = new int[row.length - 1];
 
@@ -204,10 +232,12 @@ public class Main {
         return features;
     }
     // row.length 是元素数量，最后一个元素的下标要减一。
+    // row.length is the element count; subtract one to get the last index.
     public static int extractLabel(int[] row) {
         return row[row.length - 1];
     }
     // 第一遍扫描：统计行数，供数组分配空间。nextLine 会消耗一行，避免无限循环。
+    // First pass counts rows for allocation. nextLine consumes a line so the loop advances.
     public static int countLines(String filePath)
             throws FileNotFoundException {
 
@@ -225,13 +255,15 @@ public class Main {
     }
     /**
      * 读取整个数据文件：先统计行数，再逐行解析，返回包含标签的二维数组。
+     * Count lines, then parse every row into a two-dimensional array that still includes labels.
      * 文件读取两遍，使用已学过的数组；假设读取过程中内容不变。
+     * Read twice to use ordinary arrays; the file must remain unchanged during loading.
      */
     public static int[][] readAllRows(String filePath)
             throws FileNotFoundException {
 
         int rowCount = countLines(filePath);
-        int[][] rows = new int[rowCount][]; // 先分配行数，每行数组由 parseLine 创建
+        int[][] rows = new int[rowCount][]; // 先分配行数，每行数组由 parseLine 创建 / Allocate rows first; parseLine creates each row array.
 
         Scanner reader = new Scanner(new File(filePath));
 
@@ -245,6 +277,7 @@ public class Main {
         return rows;
     }
     // 每行去掉最后的标签，生成新的特征数组；保持原行顺序。
+    // Copy each row without its label into a new feature array, preserving row order.
     public static int[][] buildSamples(int[][] rows) {
         int[][] samples = new int[rows.length][];
 
@@ -256,6 +289,7 @@ public class Main {
     }
 
     // 与 buildSamples 使用相同行顺序，保证 samples[i] 和 labels[i] 一一对应。
+    // Preserve the same row order as buildSamples so samples[i] matches labels[i].
     public static int[] buildLabels(int[][] rows) {
         int[] labels = new int[rows.length];
 
@@ -267,7 +301,9 @@ public class Main {
     }
     /**
      * 对独立测试集逐个预测，返回0～1的正确率；显示百分比时再乘100。
+     * Predict each separate test sample; return accuracy in 0-1 and multiply by 100 for a percentage.
      * 测试样本与测试标签须一一对应。这不是画板手写输入的实测正确率。
+     * Each test sample needs a matching label. This is not measured accuracy on canvas drawings.
      */
     public static double calculateAccuracy(
             int[][] samples, int[] labels,
@@ -275,7 +311,7 @@ public class Main {
 
         if (testSamples.length == 0) {
             throw new IllegalArgumentException(
-                    "测试样本不能为空"
+                    "测试样本不能为空 / Test samples must not be empty"
             );
         }
 
@@ -291,13 +327,18 @@ public class Main {
         }
 
         // 转成 double 再除，避免整数除法把4/5截成0。
+        // Cast to double before division so integer division does not truncate 4/5 to 0.
         return (double) correctCount / testSamples.length;
     }
     /**
      * 局部选择排序：每轮从未选出的样本中找一个最近邻，只选 k 轮。
+     * Partial selection sort: select one nearest remaining sample per round, for k rounds.
      * 要求 1 <= k <= distances.length；直接调用本方法也须遵守此约束。
+     * Requires 1 <= k <= distances.length, including direct calls to this method.
      * 约比较 k×n 次，完整选择排序约比较 n² 次，K较小时可减少计算。
+     * Uses O(k*n) comparisons versus O(n*n) for full selection sort, reducing work for small K.
      * 距离相等时不主动替换候选；算法不保证相同距离保持原顺序。
+     * Equal distances do not replace the candidate; this sort is not stable for distance ties.
      */
     public static int[] findNearestIndices(int[] distances, int k) {
         int[] indices = new int[distances.length];
@@ -309,8 +350,9 @@ public class Main {
         int[] nearestIndices = new int[k];
 
         // 只选出前 K 名
+        // Select only the first K neighbors.
         for (int i = 0; i < k; i++) {
-            int minPosition = i; // indices 中的位置，不是距离值或数字标签
+            int minPosition = i; // indices 中的位置，不是距离值或数字标签 / A position in indices, not a distance or digit label.
 
             for (int j = i + 1; j < indices.length; j++) {
                 if (distances[indices[j]]
@@ -324,10 +366,11 @@ public class Main {
             indices[minPosition] = temp;
 
             // 当前第 i 名已经确定，保存它的样本下标
+            // Position i is now final; save its original sample index.
             nearestIndices[i] = indices[i];
         }
 
         return nearestIndices;
     }
 
-}// Main 类在这里结束
+}// Main 类在这里结束 / End of the Main class.
